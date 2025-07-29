@@ -1,54 +1,31 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase/supabaseClient';
 
-export default function Auth({ onLoginSuccess }) {
+export default function Auth({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    let result;
-    if (isLogin) {
-      result = await supabase.auth.signInWithPassword({ email, password });
-    } else {
-      result = await supabase.auth.signUp({ email, password });
-    }
-    if (result.error) {
-      setMessage(result.error.message);
-    } else {
-      setMessage('Success!');
-      if (isLogin && onLoginSuccess) {
-        onLoginSuccess();
-      }
-    }
+  const handleLogin = async () => {
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setError(error.message);
+    else onLogin(data.session.user);
+  };
+
+  const handleSignup = async () => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) setError(error.message);
+    else alert('Check your email to verify');
   };
 
   return (
-    <div>
-      <h2>{isLogin ? 'Login' : 'Register'}</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /><br/>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /><br/>
-        <button type="submit">{isLogin ? 'Login' : 'Register'}</button>
-      </form>
-      <p>{message}</p>
-      <button onClick={() => setIsLogin(!isLogin)}>
-        {isLogin ? 'Need an account? Register' : 'Have an account? Login'}
-      </button>
+    <div style={{ padding: 20 }}>
+      <h2>Login / Signup</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} /><br />
+      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} /><br />
+      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleSignup}>Sign Up</button>
     </div>
   );
 }
